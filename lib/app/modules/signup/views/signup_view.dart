@@ -99,7 +99,9 @@ class SignupView extends GetView<SignupController> {
                 Obx(() => SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: controller.isFormValid.value ? controller.createAccount : null,
+                    onPressed: (){
+                      Get.offNamed(Routes.USERCREATE);
+                    },
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16.h),
                       backgroundColor: controller.isFormValid.value ? Colors.black : Colors.grey[300],

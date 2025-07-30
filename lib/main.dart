@@ -14,6 +14,8 @@ void main() {
       builder: (context, child){
         return GetMaterialApp(
           debugShowCheckedModeBanner: false,
+          defaultTransition: Transition.fade,
+          transitionDuration: Duration(milliseconds: 300),
           title: "Ecommerce App",
           initialRoute: AppPages.INITIAL,
           getPages: AppPages.routes,
