@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 
+import '../../../routes/app_pages.dart';
 import '../controllers/usercreate_controller.dart';
 
 class UsercreateView extends GetView<UsercreateController> {
@@ -62,7 +63,9 @@ class UsercreateView extends GetView<UsercreateController> {
             SizedBox(height: 48.h),
 
             ElevatedButton(
-              onPressed: controller.submitDetails,
+              onPressed: (){
+                Get.offNamed(Routes.DASHBOARD);
+              },
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.symmetric(vertical: 16.h),
                 backgroundColor: Colors.black,

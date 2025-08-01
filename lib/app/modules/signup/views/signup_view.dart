@@ -100,7 +100,7 @@ class SignupView extends GetView<SignupController> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: (){
-                      Get.offNamed(Routes.USERCREATE);
+                      Get.offNamed(Routes.DASHBOARD);
                     },
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16.h),

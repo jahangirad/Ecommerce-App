@@ -10,6 +10,13 @@ abstract class Routes {
   static const FORGOT = _Paths.FORGOT;
   static const RESET = _Paths.RESET;
   static const USERCREATE = _Paths.USERCREATE;
+  static const SEARCH = _Paths.SEARCH;
+  static const DASHBOARD = _Paths.DASHBOARD;
+  static const SAVED = _Paths.SAVED;
+  static const CART = _Paths.CART;
+  static const ACCOUNT = _Paths.ACCOUNT;
+  static const PRODUCT_DETAILS = _Paths.PRODUCT_DETAILS;
+  static const MY_ORDERS = _Paths.MY_ORDERS;
 }
 
 abstract class _Paths {
@@ -21,4 +28,11 @@ abstract class _Paths {
   static const FORGOT = '/forgot';
   static const RESET = '/reset';
   static const USERCREATE = '/usercreate';
+  static const SEARCH = '/search';
+  static const DASHBOARD = '/dashboard';
+  static const SAVED = '/saved';
+  static const CART = '/cart';
+  static const ACCOUNT = '/account';
+  static const PRODUCT_DETAILS = '/product-details';
+  static const MY_ORDERS = '/my-orders';
 }
