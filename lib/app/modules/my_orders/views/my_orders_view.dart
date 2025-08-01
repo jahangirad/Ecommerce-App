@@ -244,7 +244,10 @@ class MyOrdersView extends GetView<MyOrdersController> {
     return SizedBox(
       height: 35.h,
       child: ElevatedButton(
-        onPressed: isCompleted ? () => controller.showReviewBottomSheet() : () { /* Track Order Logic */ },
+        onPressed: isCompleted
+            ? () => controller.showReviewBottomSheet()
+        // এখানে পরিবর্তন করা হয়েছে
+            : () => controller.navigateToTrackOrder(order),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.black,
           foregroundColor: Colors.white,

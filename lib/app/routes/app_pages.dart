@@ -26,6 +26,8 @@ import '../modules/signup/bindings/signup_binding.dart';
 import '../modules/signup/views/signup_view.dart';
 import '../modules/splash/bindings/splash_binding.dart';
 import '../modules/splash/views/splash_view.dart';
+import '../modules/track_order/bindings/track_order_binding.dart';
+import '../modules/track_order/views/track_order_view.dart';
 import '../modules/usercreate/bindings/usercreate_binding.dart';
 import '../modules/usercreate/views/usercreate_view.dart';
 
@@ -106,6 +108,11 @@ class AppPages {
       name: _Paths.MY_ORDERS,
       page: () => const MyOrdersView(),
       binding: MyOrdersBinding(),
+    ),
+    GetPage(
+      name: _Paths.TRACK_ORDER,
+      page: () => const TrackOrderView(),
+      binding: TrackOrderBinding(),
     ),
   ];
 }

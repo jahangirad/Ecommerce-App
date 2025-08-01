@@ -3,6 +3,8 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import '../../../routes/app_pages.dart';
+
 class MyOrdersController extends GetxController {
   final RxInt selectedTabIndex = 0.obs;
 
@@ -74,6 +76,13 @@ class MyOrdersController extends GetxController {
         'status': 'Completed',
       },
     ]);
+  }
+
+  void navigateToTrackOrder(Map<String, dynamic> order) {
+    Get.toNamed(
+      Routes.TRACK_ORDER,
+      arguments: order,
+    );
   }
 
   // রিভিউ দেওয়ার জন্য বটমশীট দেখানোর মেথড
