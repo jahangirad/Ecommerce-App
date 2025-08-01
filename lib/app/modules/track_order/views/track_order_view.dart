@@ -29,17 +29,6 @@ class TrackOrderView extends GetView<TrackOrderController> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(
-              Icons.notifications_none_outlined,
-              color: Colors.black,
-              size: 28.sp,
-            ),
-          ),
-          SizedBox(width: 10.w),
-        ],
       ),
       // Stack এর পরিবর্তে Column ব্যবহার করা হয়েছে
       body: Column(

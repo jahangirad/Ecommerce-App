@@ -28,17 +28,6 @@ class MyOrdersView extends GetView<MyOrdersController> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(
-              Icons.notifications_none_outlined,
-              color: Colors.black,
-              size: 28.sp,
-            ),
-          ),
-          SizedBox(width: 10.w),
-        ],
       ),
       body: Column(
         children: [

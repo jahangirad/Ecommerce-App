@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
 
+import '../../../routes/app_pages.dart';
 import '../controllers/saved_controller.dart';
 
 class SavedView extends GetView<SavedController> {
@@ -19,7 +20,9 @@ class SavedView extends GetView<SavedController> {
         centerTitle: true,
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Get.toNamed(Routes.NOTIFICATIONS);
+            },
             icon: Icon(Icons.notifications_outlined, color: Colors.black, size: 24.sp),
           ),
         ],

@@ -21,12 +21,6 @@ class UsercreateView extends GetView<UsercreateController> {
           style: TextStyle(color: Colors.black, fontSize: 20.sp, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.notifications_outlined, color: Colors.black, size: 24.sp),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),

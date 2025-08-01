@@ -18,6 +18,11 @@ abstract class Routes {
   static const PRODUCT_DETAILS = _Paths.PRODUCT_DETAILS;
   static const MY_ORDERS = _Paths.MY_ORDERS;
   static const TRACK_ORDER = _Paths.TRACK_ORDER;
+  static const ADDRESS = _Paths.ADDRESS;
+  static const PAYMENT_METHOD = _Paths.PAYMENT_METHOD;
+  static const NOTIFICATIONS = _Paths.NOTIFICATIONS;
+  static const HELP_CENTER = _Paths.HELP_CENTER;
+  static const CHECKOUT = _Paths.CHECKOUT;
 }
 
 abstract class _Paths {
@@ -37,4 +42,9 @@ abstract class _Paths {
   static const PRODUCT_DETAILS = '/product-details';
   static const MY_ORDERS = '/my-orders';
   static const TRACK_ORDER = '/track-order';
+  static const ADDRESS = '/address';
+  static const PAYMENT_METHOD = '/payment-method';
+  static const NOTIFICATIONS = '/notifications';
+  static const HELP_CENTER = '/help-center';
+  static const CHECKOUT = '/checkout';
 }

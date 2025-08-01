@@ -59,12 +59,6 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
       ),
       title: Text('Details', style: TextStyle(color: Colors.black, fontSize: 20.sp, fontWeight: FontWeight.bold)),
       centerTitle: true,
-      actions: [
-        IconButton(
-          onPressed: () {},
-          icon: Icon(Icons.notifications_outlined, color: Colors.black, size: 24.sp),
-        ),
-      ],
     );
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
 
+import '../../../routes/app_pages.dart';
 import '../controllers/cart_controller.dart';
 
 class CartView extends GetView<CartController> {
@@ -17,7 +18,7 @@ class CartView extends GetView<CartController> {
         title: Text('My Cart', style: TextStyle(color: Colors.black, fontSize: 20.sp, fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
-          IconButton(onPressed: () {}, icon: Icon(Icons.notifications_outlined, color: Colors.black, size: 24.sp)),
+          IconButton(onPressed: () {Get.toNamed(Routes.NOTIFICATIONS);}, icon: Icon(Icons.notifications_outlined, color: Colors.black, size: 24.sp)),
         ],
       ),
       body: Obx(() {
@@ -88,7 +89,9 @@ class CartView extends GetView<CartController> {
           _priceRow('Total', '\$${controller.total.toStringAsFixed(0)}', isTotal: true),
           SizedBox(height: 24.h),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              Get.toNamed(Routes.CHECKOUT);
+            },
             style: ElevatedButton.styleFrom(
               minimumSize: Size(double.infinity, 50.h),
               backgroundColor: Colors.black,

@@ -30,17 +30,6 @@ class AccountView extends GetView<AccountController> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(
-              Icons.notifications_none_outlined,
-              color: Colors.black,
-              size: 28.sp,
-            ),
-          ),
-          SizedBox(width: 10.w),
-        ],
       ),
       body: ListView(
         padding: EdgeInsets.symmetric(vertical: 20.h),
@@ -62,49 +51,51 @@ class AccountView extends GetView<AccountController> {
           _buildAccountOption(
             icon: Icons.home_outlined,
             title: 'Address Book',
-            onTap: () {},
+            onTap: () {
+              Get.toNamed(Routes.ADDRESS);
+            },
           ),
           _buildAccountOption(
             icon: Icons.payment_outlined,
             title: 'Payment Methods',
-            onTap: () {},
+            onTap: () {
+              Get.toNamed(Routes.PAYMENT_METHOD);
+            },
           ),
           _buildAccountOption(
             icon: Icons.notifications_none_outlined,
             title: 'Notifications',
-            onTap: () {},
+            onTap: () {
+              Get.toNamed(Routes.NOTIFICATIONS);
+            },
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 15.h),
             child: const Divider(color: Color(0xFFE0E0E0)),
-          ),
-          _buildAccountOption(
-            icon: Icons.help_outline,
-            title: 'FAQs',
-            onTap: () {},
           ),
           _buildAccountOption(
             icon: Icons.headset_mic_outlined,
             title: 'Help Center',
-            onTap: () {},
+            onTap: () {
+              Get.toNamed(Routes.HELP_CENTER);
+            },
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 15.h),
             child: const Divider(color: Color(0xFFE0E0E0)),
           ),
+          // এখানে পরিবর্তন করা হয়েছে
           _buildAccountOption(
             icon: Icons.logout,
             title: 'Logout',
-            onTap: () {},
+            onTap: controller.showLogoutDialog, // কন্ট্রোলারের মেথড কল করা হয়েছে
             isLogout: true,
           ),
         ],
       ),
-      // Bottom Navigation Bar এখান থেকে সরানো হয়েছে।
     );
   }
 
-  // Account অপশনগুলোর জন্য একটি পুনঃব্যবহারযোগ্য উইজেট।
   Widget _buildAccountOption({
     required IconData icon,
     required String title,

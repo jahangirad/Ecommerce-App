@@ -17,12 +17,6 @@ class SearchView extends GetView<SearchController> {
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Get.back()),
         title: Text('Search', style: TextStyle(color: Colors.black, fontSize: 20.sp, fontWeight: FontWeight.bold)),
         centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.notifications_outlined, color: Colors.black, size: 24.sp),
-          ),
-        ],
       ),
       body: Column(
         children: [

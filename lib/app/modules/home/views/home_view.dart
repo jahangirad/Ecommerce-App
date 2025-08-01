@@ -35,7 +35,9 @@ class HomeView extends GetView<HomeController> {
         children: [
           Text('Discover', style: TextStyle(fontSize: 34.sp, fontWeight: FontWeight.bold)),
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Get.toNamed(Routes.NOTIFICATIONS);
+            },
             icon: Icon(Icons.notifications_outlined, size: 28.sp),
           ),
         ],
