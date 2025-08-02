@@ -23,6 +23,7 @@ abstract class Routes {
   static const NOTIFICATIONS = _Paths.NOTIFICATIONS;
   static const HELP_CENTER = _Paths.HELP_CENTER;
   static const CHECKOUT = _Paths.CHECKOUT;
+  static const REVIEWS = _Paths.REVIEWS;
 }
 
 abstract class _Paths {
@@ -47,4 +48,5 @@ abstract class _Paths {
   static const NOTIFICATIONS = '/notifications';
   static const HELP_CENTER = '/help-center';
   static const CHECKOUT = '/checkout';
+  static const REVIEWS = '/reviews';
 }

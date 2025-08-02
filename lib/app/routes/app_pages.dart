@@ -28,6 +28,8 @@ import '../modules/product_details/bindings/product_details_binding.dart';
 import '../modules/product_details/views/product_details_view.dart';
 import '../modules/reset/bindings/reset_binding.dart';
 import '../modules/reset/views/reset_view.dart';
+import '../modules/reviews/bindings/reviews_binding.dart';
+import '../modules/reviews/views/reviews_view.dart';
 import '../modules/saved/bindings/saved_binding.dart';
 import '../modules/saved/views/saved_view.dart';
 import '../modules/search/bindings/search_binding.dart';
@@ -148,6 +150,11 @@ class AppPages {
       name: _Paths.CHECKOUT,
       page: () => const CheckoutView(),
       binding: CheckoutBinding(),
+    ),
+    GetPage(
+      name: _Paths.REVIEWS,
+      page: () => const ReviewsView(),
+      binding: ReviewsBinding(),
     ),
   ];
 }

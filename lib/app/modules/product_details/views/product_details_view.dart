@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
 
+import '../../../routes/app_pages.dart';
 import '../controllers/product_details_controller.dart';
 
 class ProductDetailsView extends GetView<ProductDetailsController> {
@@ -26,7 +27,10 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                   style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 12.h),
-                _buildRating(),
+                GestureDetector(
+                  onTap: () => Get.toNamed(Routes.REVIEWS),
+                    child: _buildRating()
+                ),
                 SizedBox(height: 16.h),
                 Text(
                   controller.productData.value['description'] ?? 'No description available.',
