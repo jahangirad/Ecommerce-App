@@ -18,7 +18,8 @@ class LoginView extends GetView<LoginController> {
           padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Form(
             key: controller.formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
+            // controller এর মাধ্যমে ভ্যালিডেশন হ্যান্ডেল করা হচ্ছে
+            // autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -38,13 +39,7 @@ class LoginView extends GetView<LoginController> {
                 TextFormField(
                   controller: controller.emailController,
                   validator: controller.validateEmail,
-                  decoration: _buildInputDecoration(
-                    label: 'Email',
-                    isValid: controller.validateEmail(controller.emailController.text) == null && controller.emailController.text.isNotEmpty,
-                    errorText: controller.emailController.text.isNotEmpty && controller.validateEmail(controller.emailController.text) != null
-                        ? 'Please enter valid email address'
-                        : null,
-                  ),
+                  decoration: _buildInputDecoration(label: 'Email'),
                   keyboardType: TextInputType.emailAddress,
                 ),
                 SizedBox(height: 24.h),
@@ -56,7 +51,6 @@ class LoginView extends GetView<LoginController> {
                   obscureText: !controller.isPasswordVisible.value,
                   decoration: _buildInputDecoration(
                     label: 'Password',
-                    isValid: controller.validatePassword(controller.passwordController.text) == null && controller.passwordController.text.isNotEmpty,
                   ).copyWith(
                     suffixIcon: IconButton(
                       icon: Icon(controller.isPasswordVisible.value ? Icons.visibility_outlined : Icons.visibility_off_outlined),
@@ -89,13 +83,23 @@ class LoginView extends GetView<LoginController> {
                 Obx(() => SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: controller.isFormValid.value ? controller.login : null,
+                    // ফর্ম ভ্যালিড এবং লোডিং না হলে বাটনটি সচল হবে
+                    onPressed: controller.isFormValid.value && !controller.isLoading.value
+                        ? controller.loginWithEmail // নতুন মেথডটি কল করুন
+                        : null,
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16.h),
                       backgroundColor: controller.isFormValid.value ? Colors.black : Colors.grey[300],
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                     ),
-                    child: Text(
+                    // লোডিং অবস্থায় ইন্ডিকেটর দেখান
+                    child: controller.isLoading.value
+                        ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.0),
+                    )
+                        : Text(
                       'Login',
                       style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: controller.isFormValid.value ? Colors.white : Colors.grey[500]),
                     ),
@@ -117,13 +121,15 @@ class LoginView extends GetView<LoginController> {
                 SizedBox(height: 32.h),
 
                 // -- Social Login Buttons --
-                _buildSocialButton('assets/icons/icons-google.png', 'Login with Google'),
-                SizedBox(height: 16.h),
-                _buildSocialButton('assets/icons/icons-facebook.png', 'Login with Facebook', isFacebook: true),
+                _buildSocialButton(
+                  'assets/icons/icons-google.png',
+                  'Login with Google',
+                  // কন্ট্রোলারের গুগল সাইন-ইন মেথডটি কল করুন
+                  onPressed: controller.signInWithGoogle,
+                ),
                 SizedBox(height: 80.h),
 
                 // -- Join Link --
-                // Join (Create Account) লিঙ্কে নেভিগেট করার কোড
                 Center(
                   child: Text.rich(
                     TextSpan(
@@ -151,23 +157,15 @@ class LoginView extends GetView<LoginController> {
     );
   }
 
-  InputDecoration _buildInputDecoration({required String label, required bool isValid, String? errorText}) {
-    Icon? suffixIcon;
-    if (label != 'Password' && controller.emailController.text.isNotEmpty) {
-      suffixIcon = isValid
-          ? const Icon(Icons.check_circle, color: Colors.green)
-          : const Icon(Icons.error, color: Colors.red);
-    }
-
+  // সহজতর InputDecoration মেথড
+  InputDecoration _buildInputDecoration({required String label}) {
     return InputDecoration(
       labelText: label,
       labelStyle: TextStyle(color: Colors.grey[700]),
-      errorText: errorText,
-      suffixIcon: suffixIcon,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.r),
-        borderSide: BorderSide(color: isValid ? Colors.green : (errorText != null ? Colors.red : Get.theme.primaryColor)),
+        borderSide: BorderSide(color: Get.theme.primaryColor),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.r),
@@ -184,18 +182,19 @@ class LoginView extends GetView<LoginController> {
     );
   }
 
-  Widget _buildSocialButton(String iconPath, String text, {bool isFacebook = false}) {
+  // onPressed কলব্যাক যুক্ত করে সোশ্যাল বাটন
+  Widget _buildSocialButton(String iconPath, String text, {required VoidCallback onPressed}) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: () {},
+        onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.symmetric(vertical: 16.h),
-          backgroundColor: isFacebook ? const Color(0xFF1877F2) : Colors.white,
-          foregroundColor: isFacebook ? Colors.white : Colors.black,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.r),
-            side: BorderSide(color: isFacebook ? Colors.transparent : Colors.grey[300]!),
+            side: BorderSide(color: Colors.grey[300]!),
           ),
           elevation: 0,
         ),

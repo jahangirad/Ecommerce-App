@@ -19,7 +19,6 @@ class SignupView extends GetView<SignupController> {
           padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Form(
             key: controller.formKey,
-            // We'll trigger validation manually, so autovalidate can be disabled.
             autovalidateMode: AutovalidateMode.disabled,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,7 +29,6 @@ class SignupView extends GetView<SignupController> {
                 Text('Let\'s create your account.', style: TextStyle(fontSize: 16.sp, color: Colors.grey[600])),
                 SizedBox(height: 40.h),
 
-                // -- Full Name Field --
                 Obx(() => TextFormField(
                   controller: controller.nameController,
                   focusNode: controller.nameFocusNode,
@@ -43,7 +41,6 @@ class SignupView extends GetView<SignupController> {
                 )),
                 SizedBox(height: 24.h),
 
-                // -- Email Field --
                 Obx(() => TextFormField(
                   controller: controller.emailController,
                   focusNode: controller.emailFocusNode,
@@ -60,7 +57,6 @@ class SignupView extends GetView<SignupController> {
                 )),
                 SizedBox(height: 24.h),
 
-                // -- Password Field --
                 Obx(() => TextFormField(
                   controller: controller.passwordController,
                   focusNode: controller.passwordFocusNode,
@@ -79,8 +75,6 @@ class SignupView extends GetView<SignupController> {
                 )),
                 SizedBox(height: 24.h),
 
-                // ... (বাকি UI কোড অপরিবর্তিত থাকবে)
-                // -- Terms and Policy, Buttons, etc. --
                 Text.rich(
                   TextSpan(
                     text: 'By signing up you agree to our ',
@@ -99,15 +93,17 @@ class SignupView extends GetView<SignupController> {
                 Obx(() => SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: (){
-                      Get.offNamed(Routes.DASHBOARD);
-                    },
+                    onPressed: controller.isLoading.value || !controller.isFormValid.value
+                        ? null // লোড বা ফর্ম ইনভ্যালিড হলে বাটন ডিজেবল
+                        : controller.createAccountWithEmail, // নতুন ফাংশন কল
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16.h),
                       backgroundColor: controller.isFormValid.value ? Colors.black : Colors.grey[300],
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                     ),
-                    child: Text(
+                    child: controller.isLoading.value
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3.0))
+                        : Text(
                       'Create an Account',
                       style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: controller.isFormValid.value ? Colors.white : Colors.grey[500]),
                     ),
@@ -127,12 +123,13 @@ class SignupView extends GetView<SignupController> {
                 ),
                 SizedBox(height: 32.h),
 
-                _buildSocialButton('assets/icons/icons-google.png', 'Sign Up with Google'),
-                SizedBox(height: 16.h),
-                _buildSocialButton('assets/icons/icons-facebook.png', 'Sign Up with Facebook', isFacebook: true),
+                Obx(() => _buildSocialButton(
+                  'assets/icons/icons-google.png',
+                  'Sign Up with Google',
+                  onPressed: controller.isLoading.value ? null : controller.nativeGoogleSignIn,
+                )),
                 SizedBox(height: 40.h),
 
-                // Log In লিঙ্কে নেভিগেট করার কোড
                 Center(
                   child: Text.rich(
                     TextSpan(
@@ -144,7 +141,7 @@ class SignupView extends GetView<SignupController> {
                           style: const TextStyle(fontWeight: FontWeight.bold),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
-                              Get.offNamed(Routes.LOGIN); // Create Account পেজ থেকে Login পেজে যাবে
+                              Get.offNamed(Routes.LOGIN);
                             },
                         ),
                       ],
@@ -160,7 +157,6 @@ class SignupView extends GetView<SignupController> {
     );
   }
 
-  // --- ইনপুট ডেকোরেশন তৈরির জন্য নতুন লজিক ---
   InputDecoration _buildInputDecoration({
     required String label,
     required bool isDirty,
@@ -168,17 +164,15 @@ class SignupView extends GetView<SignupController> {
     String? errorText,
   }) {
     Icon? suffixIcon;
-    // শুধুমাত্র isDirty ফ্ল্যাগ true হলেই আইকন দেখাবে
     if (isDirty && label != 'Password') {
       suffixIcon = isValid
           ? const Icon(Icons.check_circle, color: Colors.green)
           : const Icon(Icons.error, color: Colors.red);
     }
-
     return InputDecoration(
       labelText: label,
       labelStyle: TextStyle(color: Colors.grey[700]),
-      errorText: isDirty ? errorText : null, // শুধুমাত্র isDirty হলেই errorText দেখাবে
+      errorText: isDirty ? errorText : null,
       suffixIcon: suffixIcon,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
       focusedBorder: OutlineInputBorder(
@@ -196,12 +190,11 @@ class SignupView extends GetView<SignupController> {
     );
   }
 
-  Widget _buildSocialButton(String iconPath, String text, {bool isFacebook = false}) {
-    // এই ফাংশনটি অপরিবর্তিত
+  Widget _buildSocialButton(String iconPath, String text, {bool isFacebook = false, VoidCallback? onPressed}) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: () {},
+        onPressed: onPressed, // এখানে onPressed ব্যবহার করুন
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.symmetric(vertical: 16.h),
           backgroundColor: isFacebook ? const Color(0xFF1877F2) : Colors.white,

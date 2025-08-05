@@ -54,6 +54,13 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="@string/fb_login_protocol_scheme" />
             </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="ecommerce-app" android:host="login-callback" />
+                <data android:scheme="ecommerce-app" android:host="password-reset" />
+            </intent-filter>
         </activity>
 
 
