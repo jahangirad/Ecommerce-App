@@ -2,12 +2,11 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../controller/auth_controller.dart';
 import '../core/routes/app_route.dart';
 import '../widget/button_widget.dart';
 import '../widget/social_login_button_widget.dart';
 import '../widget/text_form_field_widget.dart';
-
-
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -17,6 +16,8 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  final AuthController authController = Get.put(AuthController());
+
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -99,7 +100,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
-          child: Column(
+          child: Obx(() => authController.isLoading.value
+              ? SizedBox(
+            height: MediaQuery.of(context).size.height,
+            child: const Center(child: CircularProgressIndicator()),
+          )
+              : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 50.h),
@@ -111,7 +117,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 labelText: 'Full Name',
                 hintText: 'Enter your full name',
                 controller: _nameController,
-                onChanged: (_) => _validateName(), // onChanged এ ফাংশন কল করা প্রয়োজন
+                onChanged: (_) => _validateName(),
                 inputState: _nameState,
                 errorMessage: 'Name must be more than 2 characters.',
               ),
@@ -120,7 +126,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 labelText: 'Email',
                 hintText: 'Enter your email address',
                 controller: _emailController,
-                onChanged: (_) => _validateEmail(), // onChanged এ ফাংশন কল করা প্রয়োজন
+                onChanged: (_) => _validateEmail(),
                 inputState: _emailState,
                 errorMessage: 'Please enter a valid email address',
               ),
@@ -129,7 +135,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 labelText: 'Password',
                 hintText: 'Enter your password',
                 controller: _passwordController,
-                onChanged: (_) => _validatePassword(), // onChanged এ ফাংশন কল করা প্রয়োজন
+                onChanged: (_) => _validatePassword(),
                 isPassword: true,
                 inputState: _passwordState,
                 isPasswordVisible: _isPasswordVisible,
@@ -139,36 +145,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
               SizedBox(height: 25.h),
               buildTermsAndConditions(),
               SizedBox(height: 30.h),
+              // "Create an Account" বাটনের onPressed আপডেট করা হয়েছে
               PrimaryButton(
                 text: 'Create an Account',
                 isEnabled: _isFormValid,
                 onPressed: () {
-                  Get.toNamed(AppRoute.dashboardscreen);
+                  if (_isFormValid) {
+                    authController.signUpWithEmailPassword(
+                      _nameController.text.trim(),
+                      _emailController.text.trim(),
+                      _passwordController.text.trim(),
+                    );
+                  }
                 },
               ),
               SizedBox(height: 30.h),
-
-              // Divider
               buildDivider(),
               SizedBox(height: 30.h),
-
-              // Social Sign-in Buttons
-              SocialSignInButton(text: 'Sign Up with Google', iconPath: 'assets/icon/icons-google.png', backgroundColor: Colors.white, onPressed: () {}),
+              SocialSignInButton(text: 'Sign Up with Google', iconPath: 'assets/icon/icons-google.png', backgroundColor: Colors.white, onPressed: () => authController.googleSignIn()),
               SizedBox(height: 15.h),
-              SocialSignInButton(text: 'Sign Up with Facebook', iconPath: 'assets/icon/icons-facebook.png', backgroundColor: const Color(0xFF1877F2), textColor: Colors.white, onPressed: () {}),
+              SocialSignInButton(text: 'Sign Up with Facebook', iconPath: 'assets/icon/icons-facebook.png', backgroundColor: const Color(0xFF1877F2), textColor: Colors.white, onPressed: () => authController.signInWithFacebook()),
               SizedBox(height: 40.h),
-
-              // Login Link
               buildLoginLink(),
               SizedBox(height: 20.h),
             ],
+          ),
           ),
         ),
       ),
     );
   }
 
-  // Helper Widgets
+  // Helper Widgets অপরিবর্তিত
   Widget buildTermsAndConditions() {
     return RichText(
       text: TextSpan(
@@ -206,7 +214,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
           style: TextStyle(fontSize: 16.sp, color: Colors.black),
           children: [
             const TextSpan(text: 'Already have an account? '),
-            TextSpan(text: 'Log In', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold), recognizer: TapGestureRecognizer()..onTap = () {Get.toNamed(AppRoute.loginscreen);}),
+            TextSpan(
+              text: 'Log In',
+              style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () {
+                  Get.toNamed(AppRoute.loginscreen);
+                },
+            ),
           ],
         ),
       ),

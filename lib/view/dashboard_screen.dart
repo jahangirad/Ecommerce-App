@@ -49,7 +49,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const HomeScreen(),
     const SavedScreen(),
     const CartScreen(),
-    const AccountScreen(),
+    AccountScreen(),
   ];
 
   @override

@@ -6,7 +6,6 @@ class PrimaryButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isEnabled;
   final Widget? icon;
-
   const PrimaryButton({
     super.key,
     required this.text,
@@ -14,7 +13,6 @@ class PrimaryButton extends StatelessWidget {
     this.isEnabled = true,
     this.icon,
   });
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(

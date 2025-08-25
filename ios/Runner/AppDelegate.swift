@@ -1,5 +1,6 @@
-import Flutter
 import UIKit
+import Flutter
+import app_links
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -8,6 +9,13 @@ import UIKit
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
+
+    // Check if app was launched with a deep link
+    if let url = AppLinks.shared.getLink(launchOptions: launchOptions) {
+      AppLinks.shared.handleLink(url: url)
+      return true // stop propagation
+    }
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

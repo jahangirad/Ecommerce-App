@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
+import '../controller/auth_controller.dart';
 import '../widget/profile_menu_item.dart';
 
 
 
 class AccountScreen extends StatelessWidget {
-  const AccountScreen({super.key});
+  AccountScreen({super.key});
+
+  final AuthController authController = Get.put(AuthController());
 
   @override
   Widget build(BuildContext context) {
@@ -48,10 +51,42 @@ class AccountScreen extends StatelessWidget {
           ProfileMenuItem(
             icon: FontAwesomeIcons.rightFromBracket,
             text: 'Logout',
+            color: Colors.red,
             onTap: () {
-              // লগআউট করার কোড এখানে লিখুন
+              // 3. onTap-এ ডায়ালগ দেখানোর কোড
+              Get.dialog(
+                AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                  title: const Text('Confirm Logout'),
+                  content: const Text('Are you sure you want to log out?'),
+                  actions: [
+                    // "No" বাটন
+                    TextButton(
+                      onPressed: () {
+                        Get.back(); // ডায়ালগটি বন্ধ করবে
+                      },
+                      child: const Text('No'),
+                    ),
+                    // "Yes" বাটন
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red, // বাটনকে লাল রঙ দেওয়া হলো
+                      ),
+                      onPressed: () {
+                        // ডায়ালগ বন্ধ করে এবং লগআউট ফাংশন কল করে
+                        authController.signOut();
+                      },
+                      child: const Text(
+                        'Yes',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              );
             },
-            color: Colors.red, // লগআউট বাটনকে লাল রঙ দেওয়া হলো
           ),
         ],
       ),

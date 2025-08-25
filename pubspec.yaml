@@ -44,8 +44,7 @@ dependencies:
   get_storage: ^2.1.1
   font_awesome_flutter: ^10.10.0
   supabase_flutter: ^2.9.1
-  google_sign_in: ^7.1.1
-  flutter_facebook_auth: ^7.1.2
+  google_sign_in: ^6.2.1
   app_links: ^6.4.1
 
 dev_dependencies:
