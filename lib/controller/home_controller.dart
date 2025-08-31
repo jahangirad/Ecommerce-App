@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../view/product_details_screen.dart'; // নিশ্চিত করুন পাথটি সঠিক আছে
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../view/product_details_screen.dart';
+import 'product_fetch_controller.dart';
+import 'saved_controller.dart';
 
 class HomeController extends GetxController {
+  final supabase = Supabase.instance.client;
+  final productController = Get.put(ProductFetchController());
+
+  late final SavedController savedController;
+
+  // Using Map<String, dynamic> for product data
   final RxList<Map<String, dynamic>> allProducts = <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> displayedProducts = <Map<String, dynamic>>[].obs;
   final RxString selectedCategory = 'All'.obs;
@@ -12,82 +21,161 @@ class HomeController extends GetxController {
   final double maxPrice = 5000.0;
   late Rx<RangeValues> priceRange;
 
-  final List<String> categories = ['All', 'Tshirts', 'Jeans', 'Shoes'];
-  final List<String> sortOptions = ['Relevance', 'Price: Low - High', 'Price: High - Low'];
-
-  final List<Map<String, dynamic>> _dummyData = [
-    {
-      'id': '1', 'name': 'Regular Fit Slogan', 'imageUrl': 'https://cdn.pixabay.com/photo/2023/05/08/21/59/woman-7979850_640.jpg', 'price': 1590.0, 'category': 'Tshirts', 'tags': ['tshirt', 'shirt', 'slogan tee', 'top', 'clothing', 'women fashion'], 'isFavorite': true, 'description': 'A comfortable regular fit t-shirt...'
-    },
-    {
-      'id': '2', 'name': 'Stylish Blue Jeans', 'imageUrl': 'https://cdn.pixabay.com/photo/2017/12/30/22/07/jeans-3051102_640.jpg', 'price': 1100.0, 'originalPrice': 2200.0, 'category': 'Jeans', 'tags': ['jeans', 'pants', 'pan', 'denim', 'bottoms', 'clothing'], 'isFavorite': false, 'description': 'A classic pair of blue jeans...'
-    },
-    {
-      'id': '3', 'name': 'Regular Fit Black', 'imageUrl': 'https://cdn.pixabay.com/photo/2023/05/08/21/59/woman-7979848_640.jpg', 'price': 1690.0, 'category': 'Tshirts', 'tags': ['tshirt', 'black shirt', 'top', 'women fashion', 'clothing'], 'isFavorite': false, 'description': 'An essential black sleeveless shirt...'
-    },
-    {
-      'id': '4', 'name': 'Classic Running Shoes', 'imageUrl': 'https://cdn.pixabay.com/photo/2020/10/11/05/36/nike-5644799_640.jpg', 'price': 3290.0, 'category': 'Shoes', 'tags': ['shoes', 'sneakers', 'footwear', 'sports', 'running'], 'isFavorite': false, 'description': 'A stylish pair of running shoes...'
-    },
-  ];
+  final RxList<String> categories = <String>[].obs;
+  final RxList<String> sortOptions = [
+    'Relevance',
+    'Price: Low - High',
+    'Price: High - Low'
+  ].obs;
 
   @override
   void onInit() {
     super.onInit();
-    priceRange = Rx<RangeValues>(RangeValues(0, maxPrice));
-    _loadProducts();
+
+    if (Get.isRegistered<SavedController>()) {
+      savedController = Get.find<SavedController>();
+    } else {
+      savedController = Get.put(SavedController());
+    }
+
+    priceRange = Rx<RangeValues>(const RangeValues(0, 5000));
+    fetchAndDisplayProducts();
+
     searchController.addListener(() {
       searchQuery.value = searchController.text;
       _applyFiltersAndSearch();
     });
+
+    supabase.auth.onAuthStateChange.listen((data) {
+      final AuthChangeEvent event = data.event;
+      if (event == AuthChangeEvent.signedIn || event == AuthChangeEvent.signedOut) {
+        print("Home: Auth state changed. Re-checking favorite status...");
+        _checkAllProductsFavoriteStatus();
+        savedController.fetchFavoriteProducts();
+      }
+    });
   }
 
-  @override
-  void onClose() {
-    searchController.dispose();
-    super.onClose();
-  }
+  Future<void> fetchAndDisplayProducts() async {
+    if (productController.allProducts.isEmpty) {
+      await productController.fetchProducts();
+    }
 
-  void _loadProducts() {
-    allProducts.assignAll(_dummyData);
+    // Assign raw fetched data directly
+    allProducts.assignAll(productController.allProducts);
+
+    Set<String> uniqueCategories = {'All'};
+    for (var product in allProducts) {
+      // Ensure 'category' key exists before accessing
+      uniqueCategories.add(product['category'] as String? ?? 'Uncategorized');
+    }
+    categories.assignAll(uniqueCategories.toList());
+
+    await _checkAllProductsFavoriteStatus();
     _applyFiltersAndSearch();
   }
 
-  // --- مرکزی منطق: সমস্ত ফিল্টারিং এখানে ঘটবে (সঠিক করা হয়েছে) ---
-  void _applyFiltersAndSearch() {
-    List<Map<String, dynamic>> tempProducts = List.from(allProducts);
-
-    // ধাপ ১: সার্চের উপর ভিত্তি করে ফিল্টার (সর্বোচ্চ অগ্রাধিকার)
-    if (searchQuery.value.isNotEmpty) {
-      tempProducts = tempProducts.where((product) {
-        final List<dynamic> tags = product['tags'] ?? [];
-        return tags.any((tag) => tag.toLowerCase().contains(searchQuery.value.toLowerCase()));
-      }).toList();
-    }
-    // যদি সার্চ বারে কিছু লেখা না থাকে, তবেই ক্যাটেগরি বাটনের ফিল্টার কাজ করবে
-    else if (selectedCategory.value != 'All') {
-      tempProducts = tempProducts.where((p) => p['category'] == selectedCategory.value).toList();
+  Future<void> _checkAllProductsFavoriteStatus() async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) {
+      for (var product in allProducts) {
+        product['isFavorite'] = false; // Set key directly in map
+      }
+      return;
     }
 
-    // ধাপ ২: দামের ফিল্টার (আগের ফিল্টার করা লিস্টের উপর)
-    tempProducts = tempProducts.where((p) =>
-    p['price'] >= priceRange.value.start && p['price'] <= priceRange.value.end).toList();
+    try {
+      final response = await supabase
+          .from('favorite')
+          .select('product_id')
+          .eq('user_id', userId);
 
-    // ধাপ ৩: সর্টিং
-    if (sortBy.value == 'Price: Low - High') {
-      tempProducts.sort((a, b) => a['price'].compareTo(b['price']));
-    } else if (sortBy.value == 'Price: High - Low') {
-      tempProducts.sort((a, b) => b['price'].compareTo(a['price']));
+      final favoriteProductIds =
+      (response as List).map((e) => e['product_id'] as String).toSet();
+
+      for (var product in allProducts) {
+        // Ensure 'id' key exists before accessing
+        final productId = product['id'] as String? ?? '';
+        product['isFavorite'] = favoriteProductIds.contains(productId); // Set key directly in map
+      }
+      _applyFiltersAndSearch();
+    } catch (e) {
+      print("Error checking favorite status in Home: $e");
+      for (var product in allProducts) {
+        product['isFavorite'] = false;
+      }
     }
-
-    displayedProducts.assignAll(tempProducts);
   }
 
-  // --- UI থেকে কল করার জন্য ফাংশন ---
+  void toggleFavorite(String productId) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) {
+      Get.snackbar("ত্রুটি", "ফেভারিট করতে লগইন করুন।", snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
 
-  // ক্যাটেগরি বাটনে ক্লিক করলে সার্চ বারটি পরিষ্কার হয়ে যাবে
+    try {
+      final productIndex = allProducts.indexWhere((product) => product['id'] == productId);
+      if (productIndex == -1) return;
+
+      final product = allProducts[productIndex];
+
+      if (product['isFavorite'] == true) { // Check value directly
+        await supabase
+            .from('favorite')
+            .delete()
+            .eq('user_id', userId)
+            .eq('product_id', productId);
+        product['isFavorite'] = false; // Update key directly
+        Get.snackbar("সফল", "${product['name']} ফেভারিট থেকে মুছে ফেলা হয়েছে!", snackPosition: SnackPosition.BOTTOM);
+      } else {
+        await supabase.from('favorite').insert({
+          'user_id': userId,
+          'product_id': productId,
+        });
+        product['isFavorite'] = true; // Update key directly
+        Get.snackbar("সফল", "${product['name']} ফেভারিটে যোগ করা হয়েছে!", snackPosition: SnackPosition.BOTTOM);
+      }
+      savedController.fetchFavoriteProducts();
+      _applyFiltersAndSearch();
+    } catch (e) {
+      Get.snackbar("ত্রুটি", "ফেভারিট আপডেট করতে ব্যর্থ হয়েছে।: ${e.toString()}", snackPosition: SnackPosition.BOTTOM);
+      print("Favorite toggle error in Home: $e");
+    }
+  }
+
+  void _applyFiltersAndSearch() {
+    List<Map<String, dynamic>> temp = List.from(allProducts);
+
+    if (searchQuery.value.isNotEmpty) {
+      temp = temp.where((p) {
+        final tags = List<String>.from(p['tags'] ?? []);
+        return tags.any((t) => t.toLowerCase().contains(searchQuery.value.toLowerCase())) ||
+            (p['name'] as String? ?? '').toLowerCase().contains(searchQuery.value.toLowerCase());
+      }).toList();
+    } else if (selectedCategory.value != 'All') {
+      temp = temp.where((p) => (p['category'] as String? ?? '') == selectedCategory.value).toList();
+    }
+
+    temp = temp
+        .where((p) =>
+    (p['price'] as num? ?? 0.0) >= priceRange.value.start &&
+        (p['price'] as num? ?? 0.0) <= priceRange.value.end)
+        .toList();
+
+    if (sortBy.value == 'Price: Low - High') {
+      temp.sort((a, b) => (a['price'] as num? ?? 0.0).compareTo(b['price'] as num? ?? 0.0));
+    } else if (sortBy.value == 'Price: High - Low') {
+      temp.sort((a, b) => (b['price'] as num? ?? 0.0).compareTo(a['price'] as num? ?? 0.0));
+    } else {
+      temp.sort((a, b) => (a['name'] as String? ?? '').compareTo(b['name'] as String? ?? ''));
+    }
+
+    displayedProducts.assignAll(temp);
+  }
+
   void filterByCategory(String category) {
     selectedCategory.value = category;
-    // ব্যবহারকারীর সুবিধার জন্য, ক্যাটেগরি পরিবর্তন করলে সার্চ টেক্সট মুছে ফেলা হচ্ছে
     if (searchController.text.isNotEmpty) {
       searchController.clear();
     }
@@ -96,10 +184,12 @@ class HomeController extends GetxController {
 
   void updateSortBy(String newSortBy) {
     sortBy.value = newSortBy;
+    _applyFiltersAndSearch();
   }
 
   void updatePriceRange(RangeValues newRange) {
     priceRange.value = newRange;
+    _applyFiltersAndSearch();
   }
 
   void applyFiltersFromSheet() {
@@ -107,16 +197,7 @@ class HomeController extends GetxController {
     Get.back();
   }
 
-  void toggleFavorite(String productId) {
-    final productIndex = allProducts.indexWhere((p) => p['id'] == productId);
-    if (productIndex != -1) {
-      allProducts[productIndex]['isFavorite'] = !(allProducts[productIndex]['isFavorite'] as bool);
-      allProducts.refresh();
-      _applyFiltersAndSearch();
-    }
-  }
-
   void goToProductDetails(Map<String, dynamic> product) {
-    Get.to(() => const ProductDetailsScreen(), arguments: product);
+    Get.to(() => const ProductDetailsScreen(), arguments: product); // Pass the Map
   }
 }

@@ -41,7 +41,7 @@ class AccountScreen extends StatelessWidget {
           ProfileMenuItem(icon: FontAwesomeIcons.box, text: 'My Orders', onTap: () {Get.toNamed(AppRoute.myorderscreen);}),
           ProfileMenuItem(icon: FontAwesomeIcons.userPen, text: 'My Details', onTap: () {Get.toNamed(AppRoute.mydetailsscreen);}),
           ProfileMenuItem(icon: FontAwesomeIcons.addressBook, text: 'Address Book', onTap: () {Get.toNamed(AppRoute.addressscreen);}),
-          ProfileMenuItem(icon: FontAwesomeIcons.creditCard, text: 'Payment Methods', onTap: () {Get.toNamed(AppRoute.paymentscreen);}),
+          ProfileMenuItem(icon: FontAwesomeIcons.creditCard, text: 'Promo Code', onTap: () {Get.toNamed(AppRoute.promocodescreen);}),
           ProfileMenuItem(icon: FontAwesomeIcons.solidBell, text: 'Notifications', onTap: () {Get.toNamed(AppRoute.notificationscreen);}),
           _buildDivider(),
           ProfileMenuItem(icon: FontAwesomeIcons.headset, text: 'Help Center', onTap: () {Get.toNamed(AppRoute.helpcenterscreen);}),

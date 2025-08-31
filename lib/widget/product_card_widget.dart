@@ -4,90 +4,104 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class ProductCard extends StatelessWidget {
   final Map<String, dynamic> product;
   final VoidCallback onFavoriteToggle;
+  final VoidCallback? onTap;
 
   const ProductCard({
-    super.key,
+    Key? key,
     required this.product,
     required this.onFavoriteToggle,
-  });
+    this.onTap,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final bool isFavorite = product['isFavorite'] ?? false;
-    final num? originalPrice = product['originalPrice'];
+    // Accessing properties directly from the map with null checks and defaults
+    final String id = product['id'] as String? ?? 'unknown_id';
+    final String name = product['name'] as String? ?? 'Product Name';
+    final String imageUrl = product['image_url'] as String? ?? 'https://cdn.pixabay.com/photo/2015/11/03/09/03/see-1019991_640.jpg';
+    final double price = (product['price'] as num? ?? 0.0).toDouble();
+    final bool isFavorite = product['isFavorite'] as bool? ?? false;
 
-    // মূল কন্টেন্টকে একটি Column-এ রাখা হয়েছে
-    final cardContent = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Stack(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12.r),
-              child: Image.network(
-                product['imageUrl'],
-                fit: BoxFit.cover,
-                height: 180.h,
-                width: double.infinity,
+            Expanded(
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+                    child: Image.network(
+                      imageUrl,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    top: 8.h,
+                    right: 8.w,
+                    child: GestureDetector(
+                      onTap: onFavoriteToggle,
+                      child: Container(
+                        padding: EdgeInsets.all(4.w),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.8),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite ? Colors.red : Colors.grey,
+                          size: 20.sp,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            Positioned(
-              top: 8.h,
-              right: 8.w,
-              child: GestureDetector(
-                onTap: onFavoriteToggle,
-                child: Container(
-                  padding: EdgeInsets.all(6.sp),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
+            Padding(
+              padding: EdgeInsets.all(12.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  child: Icon(
-                    isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: isFavorite ? Colors.red : Colors.black,
-                    size: 20.sp,
+                  SizedBox(height: 4.h),
+                  Text(
+                    '\$${price.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ],
         ),
-        SizedBox(height: 8.h),
-        Text(
-          product['name'],
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        SizedBox(height: 4.h),
-        if (originalPrice != null)
-          Row(
-            children: [
-              Text(
-                '\$${(product['price'] as num).toStringAsFixed(0)}',
-                style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(width: 8.w),
-              Text(
-                '\$${originalPrice.toStringAsFixed(0)}',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: Colors.grey,
-                  decoration: TextDecoration.lineThrough,
-                ),
-              ),
-            ],
-          )
-        else
-          Text(
-            '\$${(product['price'] as num).toStringAsFixed(0)}',
-            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
-          ),
-      ],
-    );
-    return SingleChildScrollView(
-      physics: const NeverScrollableScrollPhysics(), // কার্ডের ভেতরে স্ক্রল বন্ধ রাখতে
-      child: cardContent,
+      ),
     );
   }
 }

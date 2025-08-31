@@ -2,13 +2,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-
-// আপনার প্রোজেক্টের সঠিক পাথ অনুযায়ী import করুন
 import '../controller/auth_controller.dart';
 import '../core/routes/app_route.dart';
 import '../widget/button_widget.dart';
 import '../widget/social_login_button_widget.dart';
 import '../widget/text_form_field_widget.dart';
+
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,8 +18,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // 1. Get.find() ব্যবহার করে কন্ট্রোলার খুঁজে নেওয়া হচ্ছে।
-  // (ধরে নেওয়া হচ্ছে main.dart-এ Get.put(AuthController()) করা আছে)
   final AuthController authController = Get.find<AuthController>();
 
   final _emailController = TextEditingController();
@@ -34,28 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    // কন্ট্রোলারগুলোতে লিসেনার যোগ করা হচ্ছে
-    _emailController.addListener(_onFieldChanged);
-    _passwordController.addListener(_onFieldChanged);
   }
-
-  @override
-  void dispose() {
-    _emailController.removeListener(_onFieldChanged);
-    _passwordController.removeListener(_onFieldChanged);
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  // যেকোনো ফিল্ড পরিবর্তনের সাথে সাথে ভ্যালিডেশন চেক হবে
-  void _onFieldChanged() {
-    _validateEmail(_emailController.text);
-    _validatePassword(_passwordController.text);
-    _checkFormValidity();
-  }
-
-  // 2. ফর্মের ভ্যালিডিটি চেক করার জন্য একটি হেল্পার ফাংশন
   void _checkFormValidity() {
     final bool isValid = _emailState == InputState.success &&
         _passwordState == InputState.success;
@@ -67,34 +44,35 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _validateEmail(String email) {
-    InputState newState;
-    if (email.isEmpty) {
-      newState = InputState.normal;
-      _emailErrorMessage = null;
-    } else {
-      final bool isValid = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(email);
-      if (isValid) {
-        newState = InputState.success;
+    setState(() {
+      if (email.isEmpty) {
+        _emailState = InputState.normal;
         _emailErrorMessage = null;
       } else {
-        newState = InputState.error;
-        _emailErrorMessage = "Please enter a valid email address";
+        final bool isValid = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(email);
+        if (isValid) {
+          _emailState = InputState.success;
+          _emailErrorMessage = null;
+        } else {
+          _emailState = InputState.error;
+          _emailErrorMessage = "Please enter valid email address";
+        }
       }
-    }
-    if(newState != _emailState) setState(() => _emailState = newState);
+    });
+    _checkFormValidity(); // প্রতিবার ভ্যালিডেশনের পর ফর্ম চেক করা হচ্ছে
   }
 
   void _validatePassword(String password) {
-    InputState newPasswordState;
-    if (password.isEmpty) {
-      newPasswordState = InputState.normal;
-    } else if (password.length >= 8) {
-      newPasswordState = InputState.success;
-    } else {
-      // 3. পাসওয়ার্ড ছোট হলে এরর স্টেট সেট করা হচ্ছে
-      newPasswordState = InputState.error;
-    }
-    if (newPasswordState != _passwordState) setState(() => _passwordState = newPasswordState);
+    setState(() {
+      if (password.isEmpty) {
+        _passwordState = InputState.normal;
+      } else if (password.length >= 8) {
+        _passwordState = InputState.success;
+      } else {
+        _passwordState = InputState.error; // ছোট পাসওয়ার্ডের জন্য error স্টেট
+      }
+    });
+    _checkFormValidity(); // প্রতিবার ভ্যালিডেশনের পর ফর্ম চেক করা হচ্ছে
   }
 
   void _togglePasswordVisibility() {
@@ -145,7 +123,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     errorMessage: 'Password must be at least 8 characters',
                   ),
                   SizedBox(height: 16.h),
-                  // ... Forgot Password Link ...
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: RichText(
+                      text: TextSpan(
+                        text: 'Forgot your password? ',
+                        style: TextStyle(color: Colors.black54, fontSize: 14.sp),
+                        children: [
+                          TextSpan(
+                            text: 'Reset your password',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                              fontSize: 14.sp,
+                            ),
+                            recognizer: TapGestureRecognizer()..onTap = () {Get.toNamed(AppRoute.forgotscreen);},
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   SizedBox(height: 32.h),
                   PrimaryButton(
                     text: 'Login',
@@ -160,7 +158,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   SizedBox(height: 24.h),
-                  // ... Divider ...
+                  Row(
+                    children: [
+                      const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: Text('Or', style: TextStyle(color: const Color(0xFF6B7280), fontSize: 14.sp)),
+                      ),
+                      const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
+                    ],
+                  ),
                   SizedBox(height: 24.h),
                   SocialSignInButton(
                     text: 'Continue with Google',

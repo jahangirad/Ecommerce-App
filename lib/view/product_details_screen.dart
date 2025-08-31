@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../controller/review_controller.dart';
+import '../controller/cart_controller.dart'; // নতুন: CartController ইম্পোর্ট করুন
 import '../widget/button_widget.dart';
-
-
-
+import '../controller/home_controller.dart';
+import 'reviews_screen.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   const ProductDetailsScreen({super.key});
@@ -14,27 +15,49 @@ class ProductDetailsScreen extends StatefulWidget {
 }
 
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
-
   String? _selectedSize;
+  late Map<String, dynamic> _product;
+  late ReviewController _reviewController;
+  late CartController _cartController;
+
+  @override
+  void initState() {
+    super.initState();
+    _reviewController = Get.put(ReviewController()); // কন্ট্রোলার ইনিশিয়ালাইজ
+    _cartController = Get.put(CartController()); // নতুন: CartController ইনিশিয়ালাইজ
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final Map<String, dynamic> product = Get.arguments as Map<String, dynamic>;
-    final List<String> sizes = product['sizes'] is List ? List<String>.from(product['sizes']) : ['S', 'M', 'L', 'XL', 'XXL'];
+    _product = Get.arguments as Map<String, dynamic>;
+
+    // Get sizes safely
+    final List<String> sizes = _product['sizes'] is List
+        ? List<String>.from(_product['sizes'])
+        : ['S', 'M', 'L', 'XL', 'XXL'];
 
     if (_selectedSize == null && sizes.isNotEmpty) {
       _selectedSize = sizes.first;
+    }
+
+    // (৮) প্রোডাক্টের ID ব্যবহার করে রিভিউ ফেচ করুন
+    if (_product['id'] != null) {
+      _reviewController.fetchReviewsForProduct(_product['id'] as String);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get.arguments ব্যবহার করে ডেটা গ্রহণ
-    final Map<String, dynamic> product = Get.arguments as Map<String, dynamic>;
+    final List<String> sizes = _product['sizes'] is List
+        ? List<String>.from(_product['sizes'])
+        : ['S', 'M', 'L', 'XL', 'XXL'];
 
-    // ডেটা থেকে সাইজের তালিকা
-    final List<String> sizes = product['sizes'] is List ? List<String>.from(product['sizes']) : ['S', 'M', 'L', 'XL', 'XXL'];
+    final double averageRating = (_product['average_rating'] as num? ?? 0.0).toDouble();
+    final int reviewCount = (_product['review_count'] as int? ?? 0);
+
+    final HomeController? homeController = Get.isRegistered<HomeController>() ? Get.find<HomeController>() : null;
+
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -63,13 +86,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // প্রোডাক্টের ছবি ও পছন্দের আইকন (অপরিবর্তিত)
             Stack(
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(20.r),
                   child: Image.network(
-                    product['imageUrl'] ?? 'https://via.placeholder.com/400',
+                    _product['image_url'] ?? 'https://cdn.pixabay.com/photo/2015/11/03/09/03/see-1019991_640.jpg',
                     height: 400.h,
                     width: double.infinity,
                     fit: BoxFit.cover,
@@ -84,8 +106,22 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.favorite_border),
+                      onPressed: () {
+                        // ফেভারিট টগল লজিক
+                        if (homeController != null && _product['id'] != null) {
+                          homeController.toggleFavorite(_product['id'] as String);
+                          // UI immediately update করার জন্য
+                          setState(() {
+                            _product['isFavorite'] = !(_product['isFavorite'] == true);
+                          });
+                        } else {
+                          Get.snackbar("Error", "Failed to update favorite.", snackPosition: SnackPosition.BOTTOM);
+                        }
+                      },
+                      icon: Icon(
+                        (_product['isFavorite'] == true) ? Icons.favorite : Icons.favorite_border,
+                        color: (_product['isFavorite'] == true) ? Colors.red : null,
+                      ),
                       iconSize: 24.sp,
                     ),
                   ),
@@ -94,39 +130,44 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             ),
             SizedBox(height: 24.h),
 
-            // প্রোডাক্টের নাম, রেটিং এবং বর্ণনা (অপরিবর্তিত)
             Text(
-              product['name'] ?? 'Product Name',
+              _product['name'] ?? 'Product Name',
               style: TextStyle(
                 fontSize: 22.sp,
                 fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: 12.h),
-            Row(
-              children: [
-                const Icon(Icons.star, color: Colors.amber, size: 20),
-                SizedBox(width: 4.w),
-                Text(
-                  '${product['rating'] ?? '0.0'}/5',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
+            GestureDetector(
+              onTap: (){
+                Get.to(() => const ReviewsScreen(), arguments: _product);
+              },
+              child: Row(
+                children: [
+                  const Icon(Icons.star, color: Colors.amber, size: 20),
+                  SizedBox(width: 4.w),
+                  Text(
+                    '${averageRating.toStringAsFixed(1)}/5', // গড় রেটিং দেখান
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                SizedBox(width: 4.w),
-                Text(
-                  '(${product['reviewCount'] ?? 0} reviews)',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Colors.grey.shade600,
+                  SizedBox(width: 4.w),
+                  Text(
+                    '($reviewCount reviews)', // মোট রিভিউ সংখ্যা দেখান
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             SizedBox(height: 16.h),
             Text(
-              product['description'] ?? 'No description available.',
+              _product['description'] ?? 'No description available.',
+              textAlign: TextAlign.justify,
               style: TextStyle(
                 fontSize: 15.sp,
                 color: Colors.grey.shade700,
@@ -135,7 +176,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             ),
             SizedBox(height: 24.h),
 
-            // সাইজ নির্বাচন
             Text(
               'Choose size',
               style: TextStyle(
@@ -145,15 +185,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             ),
             SizedBox(height: 12.h),
 
-            // *** মূল পরিবর্তন এখানে ***
             Row(
               children: sizes.map((size) {
-                // _selectedSize ভ্যারিয়েবলের সাথে তুলনা করে বাটন সিলেক্টেড কিনা তা নির্ধারণ করা হচ্ছে
                 bool isSelected = _selectedSize == size;
 
                 return GestureDetector(
                   onTap: () {
-                    // ট্যাপ করলে setState() কল করে UI আপডেট করা হচ্ছে
                     setState(() {
                       _selectedSize = size;
                     });
@@ -182,10 +219,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 );
               }).toList(),
             ),
+            SizedBox(height: 24.h),
           ],
         ),
       ),
-      // নিচের অংশ (অপরিবর্তিত)
       bottomNavigationBar: Container(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 15.h),
         decoration: BoxDecoration(
@@ -210,7 +247,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  '\$ ${(product['price'] as num? ?? 0).toStringAsFixed(2)}',
+                  '\$ ${(_product['price'] as num? ?? 0.0).toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 22.sp,
                     fontWeight: FontWeight.bold,
@@ -222,8 +259,15 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             PrimaryButton(
               text: 'Add to Cart',
               onPressed: () {
-                // এখানে আপনি সিলেক্টেড সাইজ (_selectedSize) ব্যবহার করতে পারেন
-                print('Selected Size: $_selectedSize');
+                // এখানে CartController এর addToCart মেথড কল করুন
+                if (_product['id'] != null) {
+                  _cartController.addToCart(
+                    productId: _product['id'] as String,
+                    size: _selectedSize,
+                  );
+                } else {
+                  Get.snackbar("Error", "Product ID not found.", snackPosition: SnackPosition.BOTTOM);
+                }
               },
               icon: const Icon(Icons.shopping_bag_outlined, color: Colors.white),
             ),

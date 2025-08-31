@@ -7,7 +7,7 @@ import '../../view/login_screen.dart';
 import '../../view/my_details_screen.dart';
 import '../../view/my_orders_screen.dart';
 import '../../view/notification_screen.dart';
-import '../../view/payment_method_screen.dart';
+import '../../view/promo_code_screen.dart';
 import '../../view/reset_password_screen.dart';
 import '../../view/signup_screen.dart';
 import '../../view/splash_screen.dart';
@@ -53,8 +53,8 @@ class AppPage {
       page: () => AddressScreen(),
     ),
     GetPage(
-      name: AppRoute.paymentscreen,
-      page: () => PaymentMethodScreen(),
+      name: AppRoute.promocodescreen,
+      page: () => PromoCodeScreen(),
     ),
     GetPage(
       name: AppRoute.notificationscreen,

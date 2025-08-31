@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../controller/order_controller.dart';
+import '../controller/review_controller.dart';
 import '../widget/empty_state_widget.dart';
 import '../widget/order_item_card.dart';
 import '../widget/review_bottom_sheet.dart';
+import 'track_order_screen.dart';
 
 
 class MyOrdersScreen extends StatefulWidget {
@@ -14,36 +17,35 @@ class MyOrdersScreen extends StatefulWidget {
 }
 
 class _MyOrdersScreenState extends State<MyOrdersScreen> {
+  final OrderController orderController = Get.put(OrderController());
+  final ReviewController reviewController = Get.put(ReviewController());
   bool _isOngoingSelected = true;
 
-  // ডামি ডেটা
-  final List<Map<String, dynamic>> _ongoingOrders = [
-    {'id': 'o1', 'name': 'Regular Fit Slogan', 'imageUrl': 'https://cdn.pixabay.com/photo/2023/05/08/21/59/woman-7979850_640.jpg', 'price': 1190, 'size': 'M', 'status': 'In Transit'},
-    {'id': 'o2', 'name': 'Regular Fit Polo', 'imageUrl': 'https://cdn.pixabay.com/photo/2017/12/30/22/07/jeans-3051102_640.jpg', 'price': 1100, 'size': 'L', 'status': 'Picked'},
-    {'id': 'o3', 'name': 'Regular Fit Black', 'imageUrl': 'https://cdn.pixabay.com/photo/2023/05/08/21/59/woman-7979848_640.jpg', 'price': 1690, 'size': 'L', 'status': 'In Transit'},
-    {'id': 'o4', 'name': 'Regular Fit V-Neck', 'imageUrl': 'https://cdn.pixabay.com/photo/2020/10/11/05/36/nike-5644799_640.jpg', 'price': 1290, 'size': 'S', 'status': 'Packing'},
-  ];
-
-  final List<Map<String, dynamic>> _completedOrders = [
-    {'id': 'c1', 'name': 'Regular Fit Slogan', 'imageUrl': 'https://cdn.pixabay.com/photo/2023/05/08/21/59/woman-7979850_640.jpg', 'price': 1190, 'size': 'M', 'status': 'Completed', 'isReviewed': false},
-    {'id': 'c2', 'name': 'Regular Fit Polo', 'imageUrl': 'https://cdn.pixabay.com/photo/2017/12/30/22/07/jeans-3051102_640.jpg', 'price': 1100, 'size': 'L', 'status': 'Completed', 'isReviewed': true, 'rating': 4.5},
-  ];
-
-  void _showReviewBottomSheet() {
+  // এই মেথডটি এখন শুধুমাত্র productId গ্রহণ করবে
+  void _showReviewBottomSheet(String productId) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: const ReviewBottomSheet(),
+        child: ReviewBottomSheet(
+          onReviewSubmitted: (rating, reviewText) async {
+            await reviewController.submitProductReview(
+              productId: productId,
+              rating: rating,
+              reviewText: reviewText,
+            );
+            Get.back(); // Close bottom sheet after submission
+            // After submitting review, refresh orders to update the UI
+            orderController.fetchOrders(); // This will trigger a rebuild and re-check review status
+          },
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentList = _isOngoingSelected ? _ongoingOrders : _completedOrders;
-
     return Scaffold(
       backgroundColor: _isOngoingSelected ? Colors.white : Colors.grey.shade50,
       appBar: AppBar(
@@ -62,28 +64,83 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
         children: [
           _buildToggleBar(),
           Expanded(
-            child: currentList.isEmpty
-                ? const EmptyStateWidget(
-              icon: Icons.local_mall_outlined,
-              title: 'No Ongoing Orders!',
-              subtitle: 'You don\'t have any ongoing orders\nat this time.',
-            )
-                : ListView.separated(
-              padding: EdgeInsets.all(16.w),
-              itemCount: currentList.length,
-              itemBuilder: (context, index) {
-                return OrderItemCard(
-                  order: currentList[index],
-                  isOngoing: _isOngoingSelected,
-                  onActionPressed: () {
-                    if (!_isOngoingSelected && currentList[index]['isReviewed'] == false) {
-                      _showReviewBottomSheet();
+            child: Obx(() {
+              if (orderController.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (orderController.errorMessage.isNotEmpty) {
+                return Center(child: Text('Error: ${orderController.errorMessage.value}'));
+              }
+
+              final currentList = _isOngoingSelected
+                  ? orderController.ongoingOrders
+                  : orderController.completedOrders;
+
+              if (currentList.isEmpty) {
+                return EmptyStateWidget(
+                  icon: Icons.local_mall_outlined,
+                  title: _isOngoingSelected ? 'No Ongoing Orders!' : 'No Completed Orders!',
+                  subtitle: _isOngoingSelected
+                      ? 'You don\'t have any ongoing orders\nat this time.'
+                      : 'You haven\'t completed any orders yet.',
+                );
+              } else {
+                return ListView.separated(
+                  padding: EdgeInsets.all(16.w),
+                  itemCount: currentList.length,
+                  itemBuilder: (context, index) {
+                    final order = currentList[index];
+
+                    // Get the productId for the first item in the order
+                    String? productId;
+                    if (order['order_items_details'] != null && (order['order_items_details'] as List).isNotEmpty) {
+                      productId = order['order_items_details'][0]['id'];
+                    }
+
+                    if (!_isOngoingSelected && productId != null) {
+                      // For completed orders, we need to check review status for the product
+                      return FutureBuilder<bool>(
+                        future: reviewController.hasUserReviewedProduct(productId),
+                        builder: (context, snapshot) {
+                          bool hasReviewed = snapshot.data ?? false; // Default to false while loading
+
+                          return OrderItemCard(
+                            order: order,
+                            isOngoing: _isOngoingSelected,
+                            hasProductReview: hasReviewed, // Pass the review status
+                            onActionPressed: () {
+                              if (hasReviewed) {
+                                // TODO: Implement navigation to view review details
+                                Get.snackbar("Info", "Viewing review details for product ID: $productId (Not implemented yet).", snackPosition: SnackPosition.BOTTOM);
+                              } else {
+                                _showReviewBottomSheet(productId!);
+                              }
+                            },
+                          );
+                        },
+                      );
+                    } else {
+                      // For ongoing orders or if productId is null for completed (shouldn't happen with proper data)
+                      return OrderItemCard(
+                        order: order,
+                        isOngoing: _isOngoingSelected,
+                        hasProductReview: false, // Not applicable or not checked for ongoing
+                        onActionPressed: () {
+                          if (!_isOngoingSelected) { // This block handles completed if productId was null
+                            if (productId == null) {
+                              Get.snackbar("Error", "Product ID not found for review.", snackPosition: SnackPosition.BOTTOM);
+                            }
+                          } else { // Ongoing orders logic
+                            Get.to(() => TrackOrderScreen(orderDetails: order));
+                          }
+                        },
+                      );
                     }
                   },
+                  separatorBuilder: (context, index) => SizedBox(height: 16.h),
                 );
-              },
-              separatorBuilder: (context, index) => SizedBox(height: 16.h),
-            ),
+              }
+            }),
           ),
         ],
       ),
@@ -114,6 +171,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
           setState(() {
             _isOngoingSelected = text == 'Ongoing';
           });
+          orderController.fetchOrders(); // Refresh orders when toggling
         },
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 10.h),

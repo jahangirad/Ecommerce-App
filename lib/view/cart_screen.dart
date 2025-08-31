@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../controller/cart_controller.dart';
 import '../widget/button_widget.dart';
 import '../widget/empty_state_widget.dart';
 import 'checkout_screen.dart';
-
 
 
 class CartScreen extends StatefulWidget {
@@ -15,67 +15,16 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  final List<Map<String, dynamic>> _cartItems = [
-    {
-      'id': '1',
-      'name': 'Regular Fit Slogan',
-      'imageUrl': 'https://cdn.pixabay.com/photo/2023/05/08/21/59/woman-7979850_640.jpg',
-      'price': 1190.0,
-      'size': 'L',
-    },
-    {
-      'id': '2',
-      'name': 'Regular Fit Polo',
-      'imageUrl': 'https://cdn.pixabay.com/photo/2017/12/30/22/07/jeans-3051102_640.jpg',
-      'price': 1100.0,
-      'size': 'M',
-    },
-    {
-      'id': '3',
-      'name': 'Regular Fit Black',
-      'imageUrl': 'https://cdn.pixabay.com/photo/2023/05/08/21/59/woman-7979848_640.jpg',
-      'price': 1290.0,
-      'size': 'L',
-    },
-  ];
+  final CartController _cartController = Get.put(CartController()); // CartController ইনস্ট্যান্স
 
   @override
   void initState() {
     super.initState();
-    for (var item in _cartItems) {
-      item.putIfAbsent('quantity', () => 1);
-    }
-  }
-
-  void _incrementQuantity(String id) {
-    setState(() {
-      final item = _cartItems.firstWhere((item) => item['id'] == id);
-      item['quantity']++;
-    });
-  }
-
-  void _decrementQuantity(String id) {
-    setState(() {
-      final item = _cartItems.firstWhere((item) => item['id'] == id);
-      if (item['quantity'] > 1) {
-        item['quantity']--;
-      }
-    });
-  }
-
-  void _removeItem(String id) {
-    setState(() {
-      _cartItems.removeWhere((item) => item['id'] == id);
-    });
+    // initState এ কার্ট আইটেম ফেচ করার দরকার নেই, কারণ CartController.onInit() এটি করে
   }
 
   @override
   Widget build(BuildContext context) {
-    double subTotal = _cartItems.fold(0, (sum, item) => sum + (item['price'] * item['quantity']));
-    double shippingFee = _cartItems.isEmpty ? 0 : 80;
-    double vat = 0.0;
-    double total = subTotal + shippingFee + vat;
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -95,57 +44,74 @@ class _CartScreenState extends State<CartScreen> {
         elevation: 0,
         foregroundColor: Colors.black,
       ),
-      body: _cartItems.isEmpty
-          ? const EmptyStateWidget(
-        icon: Icons.shopping_cart_outlined,
-        title: 'Your Cart Is Empty!',
-        subtitle: 'When you add products, they\'ll\nappear here.',
-      )
-          : SingleChildScrollView(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          children: [
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _cartItems.length,
-              itemBuilder: (context, index) {
-                return _buildCartItem(_cartItems[index]);
-              },
-              separatorBuilder: (context, index) => SizedBox(height: 16.h),
-            ),
-            SizedBox(height: 30.h),
-            _buildOrderSummary(subTotal, shippingFee, vat, total),
-          ],
-        ),
-      ),
+      body: Obx(() { // Obx ব্যবহার করুন যাতে cartItems পরিবর্তন হলে UI আপডেট হয়
+        if (_cartController.cartItems.isEmpty) {
+          return const EmptyStateWidget(
+            icon: Icons.shopping_cart_outlined,
+            title: 'Your Cart Is Empty!',
+            subtitle: 'When you add products, they\'ll\nappear here.',
+          );
+        }
 
-      // *** এখানে PrimaryButton ব্যবহার করা হয়েছে ***
-      bottomNavigationBar: _cartItems.isEmpty
-          ? null
-          : Padding(
-        padding: EdgeInsets.all(16.w),
-        child: PrimaryButton(
-          text: 'Go To Checkout',
-          onPressed: () {
-            // চেকআউট স্ক্রিনে নেভিগেট করুন এবং ডেটা পাঠান
-            Get.to(
-                  () => const CheckoutScreen(),
-              arguments: {
-                'subTotal': subTotal,
-                'shippingFee': shippingFee,
-                'vat': vat,
-                'total': total,
-              },
-            );
-          },
-          icon: const Icon(Icons.arrow_forward, color: Colors.white),
-        ),
-      ),
+        double subTotal = _cartController.cartItems.fold(0.0, (sum, item) => sum + ((item['price'] as num? ?? 0.0) * (item['quantity'] as int? ?? 1)));
+        double shippingFee = 80.0; // আপনার লজিক অনুযায়ী
+        double vat = 0.0; // আপনার লজিক অনুযায়ী
+        // total calculate in CheckoutController based on subTotal, shippingFee, vat, and discount
+        // double total = subTotal + shippingFee + vat; // No need to pass 'total' as it's recalculated
+
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            children: [
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _cartController.cartItems.length,
+                itemBuilder: (context, index) {
+                  return _buildCartItem(_cartController.cartItems[index]);
+                },
+                separatorBuilder: (context, index) => SizedBox(height: 16.h),
+              ),
+              SizedBox(height: 30.h),
+              // Pass calculated values to _buildOrderSummary
+              _buildOrderSummary(subTotal, shippingFee, vat, subTotal + shippingFee + vat), // Display current total without discount
+            ],
+          ),
+        );
+      }),
+
+      bottomNavigationBar: Obx(() {
+        if (_cartController.cartItems.isEmpty) {
+          return const SizedBox.shrink(); // কার্ট খালি থাকলে বাটন দেখাবে না
+        }
+        double subTotal = _cartController.cartItems.fold(0.0, (sum, item) => sum + ((item['price'] as num? ?? 0.0) * (item['quantity'] as int? ?? 1)));
+        double shippingFee = 80.0;
+        double vat = 0.0;
+        // double total = subTotal + shippingFee + vat; // Recalculated in CheckoutController
+
+        return Padding(
+          padding: EdgeInsets.all(16.w),
+          child: PrimaryButton(
+            text: 'Go To Checkout',
+            onPressed: () {
+              // চেকআউট স্ক্রিনে নেভিগেট করুন এবং ডেটা পাঠান
+              Get.to(
+                    () => const CheckoutScreen(),
+                arguments: {
+                  'subTotal': subTotal,
+                  'shippingFee': shippingFee,
+                  'vat': vat,
+                  'cartItems': _cartController.cartItems.toList(), // <-- ✨ THIS IS THE FIX ✨
+                  // 'total': total, // 'total' is now calculated in CheckoutController
+                },
+              );
+            },
+            icon: const Icon(Icons.arrow_forward, color: Colors.white),
+          ),
+        );
+      }),
     );
   }
-
-  // বাকি উইজেট ও ফাংশনগুলো অপরিবর্তিত থাকবে...
 
   Widget _buildCartItem(Map<String, dynamic> item) {
     return Container(
@@ -167,7 +133,7 @@ class _CartScreenState extends State<CartScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(8.r),
             child: Image.network(
-              item['imageUrl'],
+              item['imageUrl'] ?? 'https://cdn.pixabay.com/photo/2015/11/03/09/03/see-1019991_640.jpg', // ফলব্যাক ইমেজ
               width: 80.w,
               height: 80.w,
               fit: BoxFit.cover,
@@ -179,17 +145,17 @@ class _CartScreenState extends State<CartScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item['name'],
+                  item['name'] ?? 'Unknown Product',
                   style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Size ${item['size']}',
+                  'Size ${item['size'] ?? 'N/A'}',
                   style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade600),
                 ),
                 SizedBox(height: 8.h),
                 Text(
-                  '\$${(item['price'] as num).toStringAsFixed(0)}',
+                  '\$${(item['price'] as num? ?? 0.0).toStringAsFixed(0)}',
                   style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -200,21 +166,21 @@ class _CartScreenState extends State<CartScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                onPressed: () => _removeItem(item['id']),
+                onPressed: () => _cartController.removeItem(item['id']), // CartController ব্যবহার করুন
                 icon: Icon(Icons.delete_outline, color: Colors.red, size: 22.sp),
               ),
               SizedBox(height: 10.h),
               Row(
                 children: [
-                  _buildQuantityButton(Icons.remove, () => _decrementQuantity(item['id'])),
+                  _buildQuantityButton(Icons.remove, () => _cartController.decrementQuantity(item['id'])),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8.w),
                     child: Text(
-                      item['quantity'].toString(),
+                      (item['quantity'] as int? ?? 1).toString(),
                       style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
                     ),
                   ),
-                  _buildQuantityButton(Icons.add, () => _incrementQuantity(item['id'])),
+                  _buildQuantityButton(Icons.add, () => _cartController.incrementQuantity(item['id'])),
                 ],
               ),
             ],

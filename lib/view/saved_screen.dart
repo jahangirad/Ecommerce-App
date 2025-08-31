@@ -1,44 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import '../controller/saved_controller.dart';
 import '../widget/product_card_widget.dart';
 import '../widget/empty_state_widget.dart';
+import 'product_details_screen.dart';
 
-class SavedScreen extends StatefulWidget {
+
+class SavedScreen extends StatelessWidget {
   const SavedScreen({super.key});
 
   @override
-  State<SavedScreen> createState() => _SavedScreenState();
-}
-
-class _SavedScreenState extends State<SavedScreen> {
-  final List<Map<String, dynamic>> _allProducts = [
-    // ... আপনার ডেটা এখানে থাকবে ...
-    {
-      'id': '1', 'name': 'Regular Fit Slogan', 'imageUrl': 'https://cdn.pixabay.com/photo/2023/05/08/21/59/woman-7979850_640.jpg', 'price': 1590.0, 'isFavorite': true,
-    },
-    {
-      'id': '2', 'name': 'Stylish Blue Jeans', 'imageUrl': 'https://cdn.pixabay.com/photo/2017/12/30/22/07/jeans-3051102_640.jpg', 'price': 1100.0, 'isFavorite': true,
-    },
-    {
-      'id': '3', 'name': 'Regular Fit Black', 'imageUrl': 'https://cdn.pixabay.com/photo/2023/05/08/21/59/woman-7979848_640.jpg', 'price': 1690.0, 'isFavorite': true,
-    },
-    {
-      'id': '4', 'name': 'Classic Running Shoes', 'imageUrl': 'https://cdn.pixabay.com/photo/2020/10/11/05/36/nike-5644799_640.jpg', 'price': 3290.0, 'isFavorite': true, // একটি আইটেমকে false করে খালি অবস্থা পরীক্ষা করতে পারেন
-    },
-  ];
-
-  void _toggleFavorite(String productId) {
-    setState(() {
-      final productIndex = _allProducts.indexWhere((p) => p['id'] == productId);
-      if (productIndex != -1) {
-        _allProducts[productIndex]['isFavorite'] = !_allProducts[productIndex]['isFavorite'];
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> savedItems = _allProducts.where((product) => product['isFavorite'] == true).toList();
+    final SavedController controller = Get.put(SavedController());
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -49,7 +23,9 @@ class _SavedScreenState extends State<SavedScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Get.snackbar("Notification", "Notifications will arrive soon!", snackPosition: SnackPosition.TOP);
+            },
             icon: const Icon(Icons.notifications_none_outlined),
           ),
         ],
@@ -59,19 +35,55 @@ class _SavedScreenState extends State<SavedScreen> {
         elevation: 0,
         foregroundColor: Colors.black,
       ),
-      body: savedItems.isEmpty
-          ? const EmptyStateWidget(  // *** এখানে নতুন উইজেটটি ব্যবহার করা হয়েছে ***
-        icon: Icons.favorite_border,
-        title: 'No Saved Items!',
-        subtitle: 'You don\'t have any saved items.\nGo to home and add some.',
-      )
-          : _buildSavedItemsGrid(savedItems),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (controller.errorMessage.isNotEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, color: Colors.red, size: 50.w),
+                SizedBox(height: 10.h),
+                Text(
+                  controller.errorMessage.value,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.red, fontSize: 16.sp),
+                ),
+                SizedBox(height: 20.h),
+                ElevatedButton.icon(
+                  onPressed: () => controller.fetchFavoriteProducts(),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text("Try again later"),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white, backgroundColor: Colors.blueAccent,
+                    textStyle: TextStyle(fontSize: 16.sp),
+                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (controller.favoriteProducts.isEmpty) {
+          return const EmptyStateWidget(
+            icon: Icons.favorite_border,
+            title: 'No saved items!',
+            subtitle: 'You have no saved items.\nGo to the home page and add some.',
+          );
+        } else {
+          return _buildSavedItemsGrid(controller.favoriteProducts, controller);
+        }
+      }),
     );
   }
 
-  // _buildEmptyState মেথডটি এখন আর এখানে নেই
-
-  Widget _buildSavedItemsGrid(List<Map<String, dynamic>> savedItems) {
+  Widget _buildSavedItemsGrid(
+      List<Map<String, dynamic>> savedItems, SavedController controller) {
     return GridView.builder(
       padding: EdgeInsets.all(16.w),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -85,7 +97,10 @@ class _SavedScreenState extends State<SavedScreen> {
         final product = savedItems[index];
         return ProductCard(
           product: product,
-          onFavoriteToggle: () => _toggleFavorite(product['id']),
+          onFavoriteToggle: () => controller.toggleFavorite(product['id'] as String),
+          onTap: () { // এখানে আপনার নেভিগেশন লজিক
+            Get.to(() => const ProductDetailsScreen(), arguments: product);
+          },
         );
       },
     );

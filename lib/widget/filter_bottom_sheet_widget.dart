@@ -9,7 +9,7 @@ class FilterBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final HomeController controller = Get.put(HomeController());
+    final HomeController controller = Get.put(HomeController()); // Use Get.find to ensure the same instance
 
     return Container(
       padding: EdgeInsets.all(24.w),
@@ -58,7 +58,7 @@ class FilterBottomSheet extends StatelessWidget {
             values: controller.priceRange.value,
             min: 0,
             max: controller.maxPrice,
-            divisions: 100,
+            divisions: (controller.maxPrice / 10).round(), // Adjust divisions for smoother steps
             activeColor: Colors.black,
             inactiveColor: Colors.grey.shade300,
             labels: RangeLabels(
@@ -66,6 +66,7 @@ class FilterBottomSheet extends StatelessWidget {
               '\$${controller.priceRange.value.end.round()}',
             ),
             onChanged: (RangeValues values) {
+              // Directly update the range in the controller. No need for a local state
               controller.updatePriceRange(values);
             },
           )),
@@ -74,7 +75,7 @@ class FilterBottomSheet extends StatelessWidget {
             width: double.infinity,
             height: 50.h,
             child: ElevatedButton(
-              onPressed: controller.applyFiltersFromSheet,
+              onPressed: controller.applyFiltersFromSheet, // Call the method to apply and close
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),

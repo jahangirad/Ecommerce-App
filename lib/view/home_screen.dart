@@ -46,7 +46,7 @@ class HomeScreen extends StatelessWidget {
               ),
               SizedBox(height: 20.h),
               Obx(() => CategorySelector(
-                categories: controller.categories,
+                categories: controller.categories.toList(),
                 selectedCategory: controller.selectedCategory.value,
                 onCategorySelected: controller.filterByCategory,
               )),
@@ -67,8 +67,8 @@ class HomeScreen extends StatelessWidget {
                     return GestureDetector(
                       onTap: () => controller.goToProductDetails(product),
                       child: ProductCard(
-                        product: product,
-                        onFavoriteToggle: () => controller.toggleFavorite(product['id']),
+                        product: product, // Pass Map<String, dynamic>
+                        onFavoriteToggle: () => controller.toggleFavorite(product['id'] as String),
                       ),
                     );
                   },

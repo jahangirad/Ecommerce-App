@@ -8,7 +8,7 @@ class AppRoute {
   static const String myorderscreen = '/myorder-screen';
   static const String mydetailsscreen = '/mydetails-screen';
   static const String addressscreen = '/address-screen';
-  static const String paymentscreen = '/payment-screen';
+  static const String promocodescreen = '/promocode-screen';
   static const String notificationscreen = '/notification-screen';
   static const String helpcenterscreen = '/helpcenter-screen';
 }
