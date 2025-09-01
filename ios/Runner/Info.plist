@@ -88,5 +88,10 @@
     <string>Scan your card to add it automatically</string>
     <key>NSCameraUsageDescription</key>
     <string>To scan cards</string>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+      <string>sms</string>
+      <string>tel</string>
+    </array>
 </dict>
 </plist>

@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../controller/help_center_controller.dart';
 import '../widget/help_center_item.dart';
 
 
-
 class HelpCenterScreen extends StatelessWidget {
-  const HelpCenterScreen({super.key});
+  HelpCenterScreen({super.key});
 
+  // Controller instance
+  final HelpCenterController helpCenterController = Get.put(HelpCenterController());
 
   final List<Map<String, dynamic>> helpItems = const [
     {
-      'icon': Icons.chat_bubble_outline, // WhatsApp আইকনের বিকল্প
+      'icon': Icons.chat_bubble_outline,
       'title': 'Whatsapp',
     },
     {
@@ -22,11 +24,11 @@ class HelpCenterScreen extends StatelessWidget {
       'title': 'Facebook',
     },
     {
-      'icon': Icons.alternate_email_sharp, // Twitter আইকনের বিকল্প
+      'icon': Icons.alternate_email_sharp,
       'title': 'Twitter',
     },
     {
-      'icon': Icons.camera_alt_outlined, // Instagram আইকনের বিকল্প
+      'icon': Icons.camera_alt_outlined,
       'title': 'Instagram',
     },
   ];
@@ -53,7 +55,7 @@ class HelpCenterScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-      ), // কাস্টম AppBar
+      ),
       body: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
         itemCount: helpItems.length,
@@ -63,12 +65,11 @@ class HelpCenterScreen extends StatelessWidget {
             icon: item['icon'],
             title: item['title'],
             onTap: () {
-              // এখানে প্রতিটি আইটেমে ট্যাপ করার কার্যকারিতা যোগ করতে পারেন
-              print('${item['title']} tapped!');
+              // Call the handleItemTap method from the controller
+              helpCenterController.handleItemTap(item['title']);
             },
           );
         },
-        // দুটি আইটেমের মধ্যে স্পেস দেওয়ার জন্য
         separatorBuilder: (context, index) => const SizedBox(height: 16.0),
       ),
     );

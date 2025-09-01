@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import '../controller/auth_controller.dart';
 import '../widget/button_widget.dart';
 import '../widget/text_form_field_widget.dart';
 import 'login_screen.dart';
-
 
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class ResetPasswordScreen extends StatefulWidget {
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final AuthController _authController = Get.put(AuthController());
 
   InputState _passwordState = InputState.normal;
   InputState _confirmPasswordState = InputState.normal;
@@ -28,10 +30,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       if (password.isEmpty) {
         _passwordState = InputState.normal;
       } else {
-        // পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে
         _passwordState = password.length >= 8 ? InputState.success : InputState.error;
       }
-      // নিশ্চিতকরণ পাসওয়ার্ডও পুনরায় যাচাই করুন
       _validateConfirmPassword(_confirmPasswordController.text);
     });
   }
@@ -92,7 +92,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 PrimaryButton(
                   text: 'Login',
                   onPressed: () {
-                    // ডায়ালগ বন্ধ করে লগইন স্ক্রিনে ফিরে যান
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (context) => const LoginScreen()),
                           (Route<dynamic> route) => false,
@@ -113,7 +112,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         _confirmPasswordState == InputState.success;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB), // স্ক্রিনশটের মতো হালকা ধূসর রঙ
+      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
         backgroundColor: const Color(0xFFF9FAFB),
         elevation: 0,
@@ -170,11 +169,16 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               onToggleVisibility: () => setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
             ),
             SizedBox(height: 40.h),
-            PrimaryButton(
-              text: 'Continue',
-              isEnabled: isButtonEnabled,
-              onPressed: _showPasswordChangedDialog,
-            ),
+            Obx(() => PrimaryButton(
+              text: _authController.isLoading.value ? 'Updating...' : 'Continue',
+              isEnabled: isButtonEnabled && !_authController.isLoading.value,
+              onPressed: () async {
+                if (isButtonEnabled) {
+                  await _authController.updatePassword(_passwordController.text.trim());
+                  // The dialog will be shown after a successful update and navigation in AuthController
+                }
+              },
+            )),
           ],
         ),
       ),
